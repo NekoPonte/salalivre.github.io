@@ -5,3 +5,20 @@
 .screen-audio-button{position:absolute;top:10px;left:10px;z-index:1;background:#17201fe8;border:1px solid #56664e;color:#e6f1df;border-radius:6px;padding:7px 10px;font-size:11px;cursor:pointer}
 .screen-audio-menu{position:fixed;z-index:1000;width:292px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow:auto;padding:16px;background:#242b2c;border:1px solid #526147;border-radius:12px;box-shadow:0 12px 45px #0009;color:#eff0ec;cursor:default}
 .audio-menu-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px;font-weight:700}.audio-menu-heading button{border:0;background:transparent;color:#c5d0c0;font-size:23px;line-height:1;padding:0 3px}.audio-menu-owner{font-size:11px;color:#a7b59e;overflow-wrap:anywhere;margin:7px 0 20px}.audio-volume-label{display:flex;justify-content:space-between;gap:8px;font-size:12px}.audio-volume-label output{color:var(--accent);font-variant-numeric:tabular-nums}#screenVolume{width:100%;accent-color:var(--accent);margin:15px 0;height:20px;cursor:pointer}.audio-volume-steps{display:flex;gap:8px}.audio-volume-steps button,.audio-mute{background:#303b32;color:#e5efdf;border:1px solid #53664a;border-radius:7px;padding:9px 10px;font-size:12px}.audio-volume-steps button{flex:1}.audio-mute{margin-top:10px;width:100%;background:#202822}.screen-audio-menu p{font-size:11px;line-height:1.6;color:#aab7a3;margin:13px 0 0}.screen-audio-menu button:disabled,.screen-audio-menu input:disabled{cursor:default;opacity:.45}
+
+
+/* A janela do navegador e a tela cheia compartilham o mesmo vídeo. */
+.screen-view-options{display:grid;gap:6px;border-bottom:1px solid #46534a;padding-bottom:13px;margin-bottom:14px}
+.screen-view-options button{background:#303b32;color:#e5efdf;border:1px solid #53664a;border-radius:7px;padding:8px 10px;text-align:left;font-size:12px}
+.screen-view-options button[aria-pressed=true]{border-color:var(--accent);color:var(--accent)}
+body:has(.stage.expanded-view){overflow:hidden}
+#stage.expanded-view{position:fixed;inset:0;z-index:50;width:100%;height:100%;min-height:0;border:0;border-radius:0;background:#000}
+#stage.expanded-view #screenGrid{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);padding:0}
+#stage.expanded-view .screen{display:none}
+#stage.expanded-view .screen.expanded-selection{display:block;grid-column:1;grid-row:1;border:0;border-radius:0;cursor:default;background:#000}
+#stage.expanded-view .screen video{display:block}
+#stage.expanded-view .caption,#stage.expanded-view .screen-audio-button,#stage.expanded-view #unfocus{display:none}
+#exitScreenView{position:absolute;z-index:5;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));padding:9px 13px;border:1px solid #ffffff45;border-radius:8px;background:#17201f80;color:#fff;font-size:12px}
+#exitScreenView:hover,#exitScreenView:focus-visible{background:#17201fe0}
+body:has(.stage.expanded-view) > :is(header,footer),
+body:has(.stage.expanded-view) #room > :not(#stage){visibility:hidden}

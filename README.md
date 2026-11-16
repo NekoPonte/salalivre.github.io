@@ -42,3 +42,7 @@ Clique com o botão direito em qualquer ponto de uma transmissão para abrir o c
 A própria prévia não reproduz áudio para evitar eco, mas continua enviando o áudio capturado. Não há amplificação acima de 100%.
 
 Verificado no navegador com três streams sintéticos locais: abertura por botão direito, volume independente, silêncio/reativação, volume zero, limite de 100%, manutenção após foco/grade e áudio da tela ainda vivo após desligar o microfone. Esses testes verificam os controles e a separação das mídias; não validam uma chamada real pela internet. A conexão entre participantes continua pendente de validação.
+
+## Modos de visualização
+
+Clique na transmissão para ampliá-la dentro da sala e ocultar a lista de participantes. O menu do botão direito reúne os controles de áudio e três modos: **Ampliar na sala**, **Preencher janela** (mantém abas e barra do navegador visíveis) e **Tela cheia** (usa a tela cheia do navegador). Nos dois modos maiores, clique em **Voltar**, no canto superior direito, para retornar à visualização anterior.
