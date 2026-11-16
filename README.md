@@ -46,3 +46,7 @@ Verificado no navegador com três streams sintéticos locais: abertura por botã
 ## Modos de visualização
 
 Clique na transmissão para ampliá-la dentro da sala e ocultar a lista de participantes. O menu do botão direito reúne os controles de áudio e três modos: **Ampliar na sala**, **Preencher janela** (mantém abas e barra do navegador visíveis) e **Tela cheia** (usa a tela cheia do navegador). Nos dois modos maiores, clique em **Voltar**, no canto superior direito, para retornar à visualização anterior.
+
+A captura de tela pede até 60 FPS. A taxa efetiva pode variar conforme o conteúdo capturado, o navegador, o computador e a conexão.
+
+Ao compartilhar uma aba, o som acompanha a aba escolhida. Para uma janela, o site pede áudio do aplicativo e só o envia quando o navegador o identifica como áudio do aplicativo. Sem esse suporte, a janela vai sem som. A tela inteira ainda permite compartilhar o áudio do sistema pelo seletor do navegador.

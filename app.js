@@ -48,7 +48,7 @@ function refreshAudioMenu(){
  $('screenMute').textContent=effectiveScreenMute(audioMenuId)?'Ativar som da transmissão':'Silenciar transmissão';
  $('screenMute').setAttribute('aria-pressed',String(effectiveScreenMute(audioMenuId)));
  for(const id of ['screenVolume','screenVolumeDown','screenVolumeUp','screenMute'])$(id).disabled=!available;
- $('screenAudioHint').textContent=s.local?(screenHasAudio(s)?'Você está enviando o áudio capturado, mesmo com o microfone desligado. Sua prévia fica sem retorno para evitar eco.':'O navegador não capturou áudio. Compartilhe novamente e marque “Compartilhar áudio”.'):!screenHasAudio(s)?'Esta transmissão chegou sem áudio. Quem transmite precisa ativar “Compartilhar áudio” no navegador.':'Só altera o que você ouve desta transmissão. Não altera as vozes nem o som para outras pessoas.';
+ $('screenAudioHint').textContent=s.local?(screenHasAudio(s)?'Você está enviando o áudio capturado, mesmo com o microfone desligado. Sua prévia fica sem retorno para evitar eco.':'A transmissão está sem som. Ao compartilhar, escolha o áudio da aba ou do aplicativo quando disponível.'):!screenHasAudio(s)?'Esta transmissão chegou sem áudio. Quem transmite precisa ativar “Compartilhar áudio” no navegador.':'Só altera o que você ouve desta transmissão. Não altera as vozes nem o som para outras pessoas.';
 }
 function closeAudioMenu(restoreFocus=false){
  $('screenAudioMenu').hidden=true;audioMenuId=null;
@@ -205,7 +205,53 @@ $('joinForm').onsubmit=async e=>{e.preventDefault();if(!window.Peer){notice('A b
 async function toggleMedia(kind){if(!joined)return;const btn=kind==='audio'?$('mic'):$('cam');btn.disabled=true;try{const tracks=localAV?.getTracks().filter(t=>t.kind===kind)||[];if(tracks.length){tracks.forEach(t=>{t.stop();localAV.removeTrack(t);});if(!localAV.getTracks().length){localAV=null;broadcast({type:'av-off'});}}else{const s=await navigator.mediaDevices.getUserMedia({audio:kind==='audio',video:kind==='video'?{width:{ideal:640},height:{ideal:360}}:false});if(!joined){stopTracks(s);return;}if(!localAV)localAV=new MediaStream();s.getTracks().forEach(t=>localAV.addTrack(t));}publishAV();}catch{notice('Acesso negado ou dispositivo indisponível. Confira a permissão no navegador.');}finally{btn.disabled=false;}}
 $('mic').onclick=()=>toggleMedia('audio');$('cam').onclick=()=>toggleMedia('video');
 function stopScreen(){const s=localScreen;localScreen=null;stopTracks(s);for(const id of links.keys())outgoing(id,'screen',null);screens.delete(myId);broadcast({type:'screen-off'});renderScreens();updateControls();}
-async function share(){if(localScreen){stopScreen();return;}if(!navigator.mediaDevices?.getDisplayMedia){notice('Este navegador não permite compartilhar tela. Tente Chrome ou Edge no computador.');return;}try{const s=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:{ideal:20,max:30}},audio:true,systemAudio:'include'});if(!joined){stopTracks(s);return;}localScreen=s;if(!screenHasAudio({stream:s}))notice('A tela está sendo transmitida sem som. Para incluir áudio, compartilhe novamente e marque “Compartilhar áudio” no navegador.');s.getVideoTracks()[0].onended=stopScreen;screens.set(myId,{stream:s,name:myName+' (você)',local:true});for(const id of links.keys())outgoing(id,'screen',s);renderScreens();updateControls();}catch(e){if(e.name!=='NotAllowedError')notice('Não foi possível compartilhar a tela. Tente novamente.');}}
+function keepDisplayAudio(stream, surface){
+ for(const track of stream.getAudioTracks()){
+  // Chromium can fall back to system audio when application capture is unavailable.
+  // Only forward window audio when the browser identifies it as application audio.
+  const label=track.label.trim().toLowerCase();
+  const allowed=surface==='monitor'
+   || (surface==='browser'&&label!=='system audio')
+   || (surface==='window'&&label==='application audio');
+  if(!allowed){
+   stream.removeTrack(track);
+   track.stop();
+  }
+ }
+}
+async function share(){
+ if(localScreen){stopScreen();return;}
+ if(!navigator.mediaDevices?.getDisplayMedia){
+  notice('Este navegador não permite compartilhar tela. Tente Chrome ou Edge no computador.');
+  return;
+ }
+ try{
+  const stream=await navigator.mediaDevices.getDisplayMedia({
+   video:{frameRate:{ideal:60,max:60}},
+   audio:true,
+   systemAudio:'include',
+   windowAudio:'window'
+  });
+  if(!joined){stopTracks(stream);return;}
+  const videoTrack=stream.getVideoTracks()[0];
+  const surface=videoTrack.getSettings().displaySurface;
+  keepDisplayAudio(stream,surface);
+  localScreen=stream;
+  if(!screenHasAudio({stream})){
+   const message=surface==='window'
+    ? 'Janela compartilhada sem som. Para enviar só o áudio do programa, escolha “Compartilhar áudio do aplicativo”, se disponível.'
+    : 'Transmissão sem som. Para incluir áudio, marque “Compartilhar áudio” no seletor do navegador.';
+   notice(message);
+  }
+  videoTrack.onended=stopScreen;
+  screens.set(myId,{stream,name:myName+' (você)',local:true});
+  for(const id of links.keys())outgoing(id,'screen',stream);
+  renderScreens();
+  updateControls();
+ }catch(error){
+  if(error.name!=='NotAllowedError')notice('Não foi possível compartilhar a tela. Tente novamente.');
+ }
+}
 $('share').onclick=share;$('startScreen').onclick=share;
 $('invite').onclick=async()=>{const url=new URL(location.href);url.hash='sala='+encodeURIComponent(isHost?myId:hostId);try{await navigator.clipboard.writeText(url.href);notice('Convite copiado! Envie para sua turma.');}catch{prompt('Copie o convite:',url.href);}};
 function leave(redirect=true){restoreExpandedView(false);if(document.fullscreenElement===stage)void exitExpandedView(false);closeAudioMenu();screenAudioSettings.clear();clearTimeout(joiningTimer);const wasHost=isHost;joined=false;if(wasHost)broadcast({type:'end'});stopTracks(localAV);stopTracks(localScreen);localAV=null;localScreen=null;peer?.destroy();links.clear();members.clear();screens.clear();avStreams.clear();calls.clear();$('audioBin').replaceChildren();$('room').hidden=true;$('lobby').hidden=false;$('joinBtn').disabled=false;$('connection').textContent='● Sem cadastro';if(wasHost){history.replaceState(null,'',location.pathname+location.search);if(redirect)location.reload();}isHost=false;}
